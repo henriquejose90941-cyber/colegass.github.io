@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sussurros na Mansão — dedução paranormal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<nav class="tabs" aria-label="Jogos"><a href="#mansao" data-tab="mansao">Sussurros na Mansão</a><a href="#imagina" data-tab="imagina">Imagina</a></nav>
+<div class="wrap" id="tab-mansao">
+  <header class="top">
+    <div class="title">
+      <h1>Sussurros na Mansão</h1>
+      <p>Cecília Albuquerque morreu esta noite. Seu espírito não fala — só acende velas sobre os sinais. Um dos convidados a matou.</p>
+    </div>
+    <div class="status">
+      <span class="soloOnly status" hidden><span class="pill">Rodada <b id="round">1</b> de 3</span>
+      <span class="pill" id="badge">Vela de acusação: <b>acesa</b></span>
+      <button id="btnRules">Como jogar</button>
+      <button id="btnNew">Nova partida</button></span>
+      <button id="btnSound" aria-pressed="false" title="Ligar ou desligar os sons">🔇 Som</button>
+    </div>
+  </header>
+
+  <div class="modebar" role="group" aria-label="Modo de jogo"><button id="modeMp" aria-pressed="true">Multijogador</button><button id="modeSolo" aria-pressed="false">Solo (treino)</button></div>
+
+  <section id="mp" class="mp" aria-live="polite"></section>
+
+  <div id="solo" hidden>
+  <section>
+    <div class="sec-head">
+      <h2>Sinais do além</h2>
+      <p>Cada vela marca o que o espírito quer mostrar sobre o meio ritual e o vestígio do assassino.</p>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <div class="bar">
+    <div class="modes" role="group" aria-label="Modo de clique">
+      <button id="modeNote" aria-pressed="true">Descartar cartas</button>
+      <button id="modeAccuse" aria-pressed="false">Montar acusação</button>
+    </div>
+    <div class="accusation" id="accText"></div>
+    <div class="actions">
+      <button class="danger" id="btnAccuse" disabled>Acusar</button>
+      <button class="primary" id="btnNext">Invocar novo sinal</button>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Os convidados</h2>
+      <p>Vermelho: meios rituais. Violeta: vestígios. O assassino usou um de cada — ambos da própria mão.</p>
+    </div>
+    <div class="suspects" id="suspects"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Vozes na sala</h2>
+      <p>Os convidados também investigam. Um deles mente.</p>
+    </div>
+    <div class="log" id="log" aria-live="polite"></div>
+  </section>
+</div>
+</div>
+<div class="wrap im" id="tab-imagina" hidden><div id="imagina-host"></div></div>
+
+<div class="night" id="night" role="dialog" aria-modal="true" aria-label="A noite caiu"><h2>A noite caiu</h2><p></p><button id="nightLobby" hidden>Cancelar e voltar ao lobby</button></div>
+
+<div class="veil" id="veil" role="dialog" aria-modal="true">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script src="solo.js"></script>
+<script src="imagina-e-abas.js"></script>
+<script src="firebase-config.js"></script>
+<script type="module" src="backend-firebase.js"></script>
+<script src="multijogador.js"></script>
+</body>
+</html>
