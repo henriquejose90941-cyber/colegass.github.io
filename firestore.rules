@@ -1,0 +1,58 @@
+rules_version = '2';
+// Regras de segurança do Sussurros na Mansão.
+// Cole este conteúdo em: Console do Firebase > Firestore Database > Regras > Publicar.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function game(code) { return get(/databases/$(database)/documents/games/$(code)).data; }
+    function roleOf(code) { return game(code).get('roles', {}).get(request.auth.uid, ''); }
+
+    match /games/{code} {
+      allow read: if signedIn();
+      // Quem cria a sala vira anfitrião.
+      allow create: if signedIn() && request.resource.data.host == request.auth.uid
+                    && request.resource.data.phase == 'lobby';
+      // Só o anfitrião altera a sala; outro jogador pode apenas assumir o posto de anfitrião.
+      allow update: if signedIn() && (
+                      resource.data.host == request.auth.uid ||
+                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['host'])
+                       && request.resource.data.host == request.auth.uid));
+      allow delete: if false;
+
+      match /players/{uid} {
+        allow read: if signedIn();
+        allow create, update: if signedIn() && request.auth.uid == uid
+                              && request.resource.data.name is string
+                              && request.resource.data.name.size() >= 2
+                              && request.resource.data.name.size() <= 20;
+        // O próprio jogador sai, ou o anfitrião remove.
+        allow delete: if signedIn() && (request.auth.uid == uid || game(code).host == request.auth.uid);
+      }
+
+      // Escolha do assassino: só quem foi sorteado assassino grava, uma vez por partida.
+      match /secret/{m} {
+        allow read: if signedIn();
+        allow create: if signedIn() && roleOf(code) == 'assassino'
+                      && request.resource.data.by == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      // Dicas: só o mestre escreve.
+      match /clues/{m} {
+        allow read: if signedIn();
+        allow create, update: if signedIn() && roleOf(code) == 'mestre';
+        allow delete: if false;
+      }
+
+      // Palpites: cada investigador grava um único documento com o próprio id.
+      match /guesses/{g} {
+        allow read: if signedIn();
+        allow create: if signedIn() && roleOf(code) == 'investigador'
+                      && request.resource.data.by == request.auth.uid
+                      && g == 'm' + string(request.resource.data.match) + '_' + request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+  }
+}
