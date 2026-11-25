@@ -284,6 +284,7 @@ function render(){
   const visible=!document.getElementById("tab-mansao").hidden&&!document.getElementById("mp").hidden;
   const dark=visible&&inGame&&!secret()&&role(S.me)!=="assassino";
   night.classList.toggle("on",!!dark);const nb=document.getElementById("nightLobby");if(nb)nb.hidden=!isHost();
+  if(inGame&&!dark) maybeMurder();
   if(dark){const r=role(S.me);night.querySelector("p").textContent=r==="mestre"?"Você é o Mestre. Quando o assassino escolher, você verá o crime e poderá dar dicas.":r==="investigador"?"Você é Investigador. Feche os olhos enquanto o assassino escolhe…":"Feche os olhos enquanto o assassino escolhe…";}
   if(inGame){
     const n=clueList().length; if(n>S.lastClues){sfx("summon");} S.lastClues=n;
@@ -339,6 +340,98 @@ document.getElementById("nightLobby").onclick=()=>A.lobby();
     if(el&&ck.state==="run") el.textContent=mmss(ck.left);
     if(key!==last){ if(last&&ck.state==="run") sfx("summon"); last=key; render(); }
   },1000);
+})();
+/* ---------- cena do assassinato ---------- */
+function maybeMurder(){
+  const s=secret(); if(!s||!S.code) return;
+  const key="sm-cena-"+S.code+"-m"+match();
+  if(ls.get(key)) return;
+  ls.set(key,"1");
+  if(Date.now()-(s.at||0)>60000) return;          /* quem chega muito depois não vê a cena */
+  playMurder();
+}
+function playMurder(){
+  if(document.getElementById("murder")) return;
+  const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const o=document.createElement("div");
+  o.id="murder"; o.className="murder"+(reduce?" calm":"");
+  o.setAttribute("role","dialog"); o.setAttribute("aria-label","A morte de Cecília");
+  o.innerHTML=`
+  <svg viewBox="0 0 400 250" class="m-svg" aria-hidden="true">
+    <defs>
+      <radialGradient id="mGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect class="m-wall" x="0" y="0" width="400" height="250" fill="#120812"/>
+    <rect x="250" y="35" width="90" height="105" rx="4" fill="#1d1430" stroke="#3a2450" stroke-width="4"/>
+    <line x1="295" y1="35" x2="295" y2="140" stroke="#3a2450" stroke-width="3"/>
+    <line x1="250" y1="88" x2="340" y2="88" stroke="#3a2450" stroke-width="3"/>
+    <circle cx="318" cy="62" r="14" fill="#e8dcf5" opacity=".85"/>
+    <rect x="0" y="205" width="400" height="45" fill="#0a040a"/>
+    <g class="m-candle">
+      <circle class="m-glow" cx="80" cy="150" r="70" fill="url(#mGlow)"/>
+      <rect x="74" y="160" width="12" height="45" fill="#2a0f14"/>
+      <path class="m-flame" d="M80 140 C 72 152, 74 160, 80 162 C 86 160, 88 152, 80 140 Z" fill="#ffb347"/>
+    </g>
+    <g class="m-cec">
+      <circle cx="180" cy="104" r="13" fill="#d9c8e6"/>
+      <path d="M167 100 C 165 125, 160 140, 156 150 L 170 120 Z M193 100 C 195 125, 200 140, 204 150 L 190 120 Z" fill="#3a1c2a"/>
+      <path d="M180 117 L 156 205 L 204 205 Z" fill="#b9a3cc"/>
+      <path d="M168 135 L 152 165 M192 135 L 208 165" stroke="#d9c8e6" stroke-width="5" stroke-linecap="round"/>
+    </g>
+    <g class="m-kil">
+      <path d="M70 205 C 70 150, 85 112, 110 100 C 135 112, 150 150, 150 205 Z" fill="#000"/>
+      <path d="M90 108 C 92 82, 128 82, 130 108 C 122 100, 98 100, 90 108 Z" fill="#000"/>
+      <circle class="m-eye" cx="102" cy="112" r="3" fill="#ff2b3b"/>
+      <circle class="m-eye" cx="118" cy="112" r="3" fill="#ff2b3b"/>
+      <path class="m-arm" d="M140 140 L 170 128" stroke="#000" stroke-width="9" stroke-linecap="round"/>
+    </g>
+    <path class="m-pool" d="M150 214 C 170 206, 230 206, 250 214 C 230 222, 170 222, 150 214 Z" fill="#7a0d18"/>
+  </svg>
+  <div class="m-flash"></div>
+  <p class="m-t1">A vela se apagou…</p>
+  <p class="m-t2">Cecília Albuquerque está morta.</p>
+  <p class="m-t3">O Mestre vai guiar a investigação. Toque para continuar.</p>`;
+  document.body.appendChild(o);
+  if(!reduce) setTimeout(()=>sfx("lose"),2300);
+  const close=()=>{o.classList.add("out");setTimeout(()=>o.remove(),500);};
+  o.addEventListener("click",close);
+  setTimeout(close,reduce?3500:7500);
+}
+(function(){
+  const st=document.createElement("style");st.textContent=`
+.murder{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;padding:1.5rem;text-align:center;cursor:pointer;animation:mIn .6s ease both}
+.murder.out{animation:mOut .5s ease both}
+.m-svg{width:min(560px,94vw);height:auto;border-radius:10px;box-shadow:0 0 60px rgba(157,60,255,.25)}
+.murder p{margin:0;color:#c9b6d6;font-family:"IM Fell English",Georgia,serif;font-size:1.1rem;opacity:0}
+.murder .m-t2{font-family:"Creepster","Impact",fantasy;font-size:clamp(1.8rem,7vw,3rem);color:#e0192a;text-shadow:0 0 24px rgba(224,25,42,.6)}
+.m-t1{animation:mTxt 1.6s .4s both}
+.m-t2{animation:mShow .8s 3.4s both}
+.m-t3{animation:mShow .8s 4.6s both}
+.m-flame,.m-glow{transform-box:fill-box;transform-origin:50% 100%;animation:mFlick .25s infinite alternate,mOff .5s 1.6s forwards}
+.m-glow{transform-origin:50% 50%}
+.m-kil{opacity:0;transform:translateX(-90px);animation:mKil 1.2s 1.6s forwards,mGone .6s 3s forwards}
+.m-eye{animation:mBlink 1.2s 1.8s infinite}
+.m-cec{transform-box:fill-box;transform-origin:100% 100%;animation:mFall .9s 2.4s cubic-bezier(.5,0,.8,.4) forwards}
+.m-wall{animation:mDark .6s 1.7s forwards}
+.m-pool{opacity:0;transform-box:fill-box;transform-origin:50% 50%;transform:scale(.2);animation:mPool 1.6s 3.2s forwards}
+.m-flash{position:fixed;inset:0;background:#e0192a;opacity:0;pointer-events:none;animation:mFlash .7s 2.3s}
+@keyframes mIn{from{opacity:0}to{opacity:1}}
+@keyframes mOut{to{opacity:0}}
+@keyframes mTxt{0%{opacity:0}30%,75%{opacity:1}100%{opacity:0}}
+@keyframes mShow{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes mFlick{from{transform:scale(1,1)}to{transform:scale(.9,1.1)}}
+@keyframes mOff{to{transform:scale(0);opacity:0}}
+@keyframes mKil{to{opacity:1;transform:translateX(0)}}
+@keyframes mGone{to{opacity:0}}
+@keyframes mBlink{0%,90%,100%{opacity:1}95%{opacity:0}}
+@keyframes mFall{to{transform:rotate(-82deg) translate(10px,6px);opacity:.85}}
+@keyframes mDark{to{fill:#060206}}
+@keyframes mPool{to{opacity:.9;transform:scale(1)}}
+@keyframes mFlash{0%{opacity:0}15%{opacity:.75}100%{opacity:0}}
+.murder.calm *{animation:none!important}
+.murder.calm p,.murder.calm .m-kil{opacity:1}
+.murder.calm .m-kil{transform:none}`;
+  document.head.appendChild(st);
 })();
 bMp.onclick=()=>mode("mp"); bSolo.onclick=()=>mode("solo");
 mode("mp");
