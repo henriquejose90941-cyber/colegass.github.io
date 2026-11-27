@@ -55,9 +55,9 @@ setup();
 (function(){
  let started=false;
  function show(){
-  const t=location.hash==="#imagina"?"imagina":"mansao";
-  document.getElementById("tab-mansao").hidden=t!=="mansao";
-  document.getElementById("tab-imagina").hidden=t!=="imagina";
+  const tabs=["mansao","imagina","quemsoueu"];
+  const h=location.hash.slice(1); const t=tabs.includes(h)?h:"mansao";
+  tabs.forEach(x=>{const el=document.getElementById("tab-"+x); if(el) el.hidden=t!==x;});
   document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.dataset.tab===t?"page":"false"));
   if(t==="imagina"&&!started){started=true;
    const host=document.getElementById("imagina-host");const R=host.attachShadow({mode:"open"});

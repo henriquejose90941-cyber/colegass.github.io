@@ -11,7 +11,7 @@
 </head>
 <body>
 <canvas id="fx" aria-hidden="true"></canvas>
-<nav class="tabs" aria-label="Jogos"><a href="#mansao" data-tab="mansao">Sussurros na Mansão</a><a href="#imagina" data-tab="imagina">Imagina</a></nav>
+<nav class="tabs" aria-label="Jogos"><a href="#mansao" data-tab="mansao">Sussurros na Mansão</a><a href="#imagina" data-tab="imagina">Imagina</a><a href="#quemsoueu" data-tab="quemsoueu">Quem Sou Eu</a></nav>
 <div class="wrap" id="tab-mansao">
   <header class="top">
     <div class="title">
@@ -70,6 +70,7 @@
 </div>
 </div>
 <div class="wrap im" id="tab-imagina" hidden><div id="imagina-host"></div></div>
+<div class="wrap qse-wrap" id="tab-quemsoueu" hidden><section id="qse" class="mp" aria-live="polite"></section></div>
 
 <div class="night" id="night" role="dialog" aria-modal="true" aria-label="A noite caiu"><h2>A noite caiu</h2><p></p><button id="nightLobby" hidden>Cancelar e voltar ao lobby</button></div>
 
@@ -82,5 +83,6 @@
 <script src="firebase-config.js"></script>
 <script type="module" src="backend-firebase.js"></script>
 <script src="multijogador.js"></script>
+<script src="quem-sou-eu.js"></script>
 </body>
 </html>
