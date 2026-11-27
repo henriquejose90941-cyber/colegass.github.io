@@ -32,7 +32,8 @@ const curQ=()=>S.questions["m"+M()+"_t"+turnNo()];
 const curAnswers=()=>Object.values(S.answers).filter(a=>a.match===M()&&a.turnNo===turnNo());
 const over=()=>G()&&G().phase==="jogo"&&order().length>=2&&doneList().length>=order().length-1;
 const timed=()=>!G()||G().timed!==false;
-const timeLeft=()=>G()&&G().turnStart?G().turnStart+(G().dur||60)*1000-Date.now():0;
+const INTRO_MS=8000;
+const timeLeft=()=>G()&&G().turnStart?Math.min((G().dur||60)*1000,G().turnStart+(G().dur||60)*1000-Date.now()):0;
 const sortedPlayers=()=>Object.entries(S.players).sort((a,b)=>(a[1].joined||0)-(b[1].joined||0));
 const targetOf=id=>G()&&G().pairs?G().pairs[id]:null;
 
@@ -292,13 +293,14 @@ function render(){
   for(const id in keep){const el=document.getElementById(id);if(el)el.value=keep[id];}
   if(fid){const el=document.getElementById(fid);if(el){el.focus();try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}}}
   hostDuties();
+  if(G()&&G().phase==="jogo") maybeIntro();
 }
 /* anfitrião inicia o jogo quando todos escolheram */
 function hostDuties(){
   if(!isHost()||!G()||S.busy) return;
   if(G().phase==="escolha"&&order().length&&order().every(id=>assignFor(id))&&S.phaseFor!==M()){
     S.phaseFor=M();
-    S.db.doc("qse/"+S.code).update({phase:"jogo",turn:0,turnNo:1,turnStart:Date.now()}).catch(()=>{S.phaseFor=null;});
+    S.db.doc("qse/"+S.code).update({phase:"jogo",turn:0,turnNo:1,turnStart:Date.now()+INTRO_MS}).catch(()=>{S.phaseFor=null;});
   }
 }
 root.addEventListener("click",e=>{
@@ -408,5 +410,128 @@ th.textContent=`
 .rank-wait span{background:#e6f0ff;color:#0d2747;border-radius:999px;padding:.15rem .6rem;font-size:.9rem}
 @keyframes mIn{from{opacity:0}to{opacity:1}}`;
 document.head.appendChild(th);
+/* página inteira em azul, branco, amarelo e magenta quando a aba Quem Sou Eu está aberta */
+const pg=document.createElement("style");
+pg.textContent=`
+body.qse-on{--bg:#f3f8ff;--surface:#ffffff;--surface2:#e6f0ff;--text:#0d2747;--muted:#52708f;--line:#bcd5f5;--flame:#e0218a;--flame-glow:rgba(224,33,138,.3);color-scheme:light;
+  background-color:#f3f8ff;
+  background-image:
+    radial-gradient(circle at 8% 12%,rgba(255,210,63,.55) 0 90px,transparent 91px),
+    radial-gradient(circle at 92% 18%,rgba(224,33,138,.28) 0 120px,transparent 121px),
+    radial-gradient(circle at 85% 88%,rgba(255,210,63,.45) 0 80px,transparent 81px),
+    radial-gradient(circle at 12% 85%,rgba(30,111,224,.22) 0 130px,transparent 131px),
+    radial-gradient(circle,rgba(224,33,138,.18) 2px,transparent 3px),
+    linear-gradient(160deg,#e3efff 0%,#ffffff 45%,#fff6d6 75%,#ffe3f4 100%);
+  background-size:auto,auto,auto,auto,34px 34px,auto;background-attachment:fixed}
+body.qse-on #fx{display:none}
+body.qse-on::before{background:#f3f8ff}
+body.qse-on .tabs a{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:1.15rem;letter-spacing:0;color:#1e6fe0;background:#fff;border:2px solid #bcd5f5;box-shadow:0 3px 10px rgba(30,111,224,.12)}
+body.qse-on .tabs a:hover{border-color:#e0218a;color:#e0218a}
+body.qse-on .tabs a[aria-current="page"]{color:#fff;border-color:transparent;background:linear-gradient(90deg,#1e6fe0,#e0218a);box-shadow:0 4px 14px rgba(224,33,138,.35)}
+#tab-quemsoueu{background:rgba(255,255,255,.75);backdrop-filter:blur(6px);border:3px solid transparent;
+  background-clip:padding-box;position:relative}
+#tab-quemsoueu::before{content:"";position:absolute;inset:-3px;border-radius:20px;padding:3px;background:linear-gradient(90deg,#1e6fe0,#ffd23f,#e0218a);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+#tab-quemsoueu .mp-card{margin:0 auto;border-top:6px solid #ffd23f}
+#tab-quemsoueu .mp-card:nth-child(odd){border-top-color:#e0218a}
+#tab-quemsoueu h2{background:linear-gradient(90deg,#1e6fe0,#e0218a);-webkit-background-clip:text;background-clip:text;color:transparent}
+#tab-quemsoueu .mp-code{color:#e0218a}
+#tab-quemsoueu button:not(.primary):not(.danger):not(.on){border-color:#ffd23f;background:#fffbea;color:#b05c00}
+#tab-quemsoueu button:not(.primary):not(.danger):not(.on):hover:not(:disabled){border-color:#e0218a;color:#e0218a}
+#tab-quemsoueu button.danger{background:linear-gradient(180deg,#ff4fb0,#e0218a);border-color:#e0218a;box-shadow:0 4px 12px rgba(224,33,138,.35)}
+#tab-quemsoueu .seg button.on{background:linear-gradient(90deg,#1e6fe0,#e0218a);border-color:transparent}
+#tab-quemsoueu .pill{background:#fff6d6;border-color:#ffd23f;color:#7a4a00}
+#tab-quemsoueu .mp-players li:nth-child(3n+1){border-left:5px solid #1e6fe0}
+#tab-quemsoueu .mp-players li:nth-child(3n+2){border-left:5px solid #ffd23f}
+#tab-quemsoueu .mp-players li:nth-child(3n){border-left:5px solid #e0218a}
+#tab-quemsoueu .qse-table{border-color:#ffd23f;box-shadow:0 0 0 6px #e0218a,0 18px 40px rgba(20,70,160,.35),inset 0 0 30px rgba(0,0,0,.18)}
+#tab-quemsoueu .qse-timer.low{color:#ffd23f}
+#tab-quemsoueu .turn-me{border:2px solid #e0218a;box-shadow:0 0 0 4px rgba(224,33,138,.15)}
+#tab-quemsoueu .postit.me{background:linear-gradient(135deg,#1e6fe0,#e0218a)}
+#tab-quemsoueu .seat.mine .seat-name{background:#e0218a}
+#tab-quemsoueu .qse-rank-live{border-top:6px solid #ffd23f}
+#tab-quemsoueu .rank-list .medal{color:#e0218a}
+#tab-quemsoueu .rank-wait span{background:#ffe3f4;color:#9c1360}`;
+document.head.appendChild(pg);
+/* ---------- animação de abertura: bonequinhos de caderno ---------- */
+function maybeIntro(){
+  const key="qse-intro-"+S.code+"-m"+M();
+  if(ls.get(key)) return; ls.set(key,"1");
+  if(!G().turnStart||Date.now()-G().turnStart>30000) return;
+  playIntro();
+}
+function playIntro(){
+  if(document.getElementById("qseIntro")) return;
+  const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const o=document.createElement("div"); o.id="qseIntro"; o.className="qi"+(reduce?" calm":"");
+  o.setAttribute("role","dialog"); o.setAttribute("aria-label","Abertura do Quem Sou Eu");
+  const lines=Array.from({length:11},(_,i)=>`<line x1="0" y1="${40+i*28}" x2="600" y2="${40+i*28}" stroke="#b9d6f7" stroke-width="1.5"/>`).join("");
+  const fig=(x,cls,body)=>`<g class="qi-fig ${cls}" style="transform-origin:${x}px 270px">
+      <circle cx="${x}" cy="118" r="24" fill="#fff" stroke="#1b2a4a" stroke-width="4"/>
+      <circle cx="${x-8}" cy="114" r="2.8" fill="#1b2a4a"/><circle cx="${x+8}" cy="114" r="2.8" fill="#1b2a4a"/>
+      <line x1="${x}" y1="142" x2="${x}" y2="212" stroke="#1b2a4a" stroke-width="4" stroke-linecap="round"/>
+      <path d="M${x} 212 L${x-22} 266 M${x} 212 L${x+22} 266" stroke="#1b2a4a" stroke-width="4" stroke-linecap="round" fill="none"/>${body}</g>`;
+  o.innerHTML=`<div class="qi-paper">
+  <svg viewBox="0 0 600 330" class="qi-svg" aria-hidden="true">
+    <rect width="600" height="330" fill="#fffef8"/>${lines}
+    <line x1="48" y1="0" x2="48" y2="330" stroke="#ff8fb8" stroke-width="2"/>
+    ${fig(140,"qi-a",`<path d="M128 126 Q140 136 152 126" stroke="#1b2a4a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <line x1="140" y1="165" x2="112" y2="200" stroke="#1b2a4a" stroke-width="4" stroke-linecap="round"/>
+      <g class="qi-arm-a" style="transform-origin:140px 165px"><line x1="140" y1="165" x2="190" y2="150" stroke="#1b2a4a" stroke-width="4" stroke-linecap="round"/></g>`)}
+    ${fig(300,"qi-b",`<rect x="282" y="78" width="36" height="22" rx="2" fill="#ffd23f" stroke="#c99a00" stroke-width="2" transform="rotate(-6 300 89)"/>
+      <text x="300" y="96" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2a4a" font-family="Fredoka,system-ui,sans-serif">?</text>
+      <ellipse cx="300" cy="130" rx="5" ry="6" fill="#1b2a4a"/>
+      <g class="qi-arms-b"><path d="M300 165 L268 140 L262 120 M300 165 L332 140 L338 120" stroke="#1b2a4a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>`)}
+    ${fig(460,"qi-c",`<path d="M448 126 Q460 134 472 126" stroke="#1b2a4a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <line x1="460" y1="165" x2="490" y2="200" stroke="#1b2a4a" stroke-width="4" stroke-linecap="round"/>
+      <g class="qi-arm-c" style="transform-origin:460px 165px"><line x1="460" y1="165" x2="412" y2="140" stroke="#1b2a4a" stroke-width="4" stroke-linecap="round"/></g>`)}
+    <g class="qi-q q1"><text x="330" y="70" font-size="26" fill="#e0218a" font-family="Fredoka,system-ui,sans-serif" font-weight="700">?</text></g>
+    <g class="qi-q q2"><text x="262" y="64" font-size="20" fill="#1e6fe0" font-family="Fredoka,system-ui,sans-serif" font-weight="700">?</text></g>
+    <g class="qi-q q3"><text x="312" y="52" font-size="16" fill="#e0a800" font-family="Fredoka,system-ui,sans-serif" font-weight="700">?</text></g>
+    <g class="qi-bub b1"><rect x="212" y="8" width="176" height="40" rx="18" fill="#fff" stroke="#1e6fe0" stroke-width="3"/><path d="M290 47 L300 62 L306 47" fill="#fff" stroke="#1e6fe0" stroke-width="3"/><text x="300" y="34" text-anchor="middle" font-size="17" fill="#1b2a4a" font-family="Fredoka,system-ui,sans-serif">Eu sou um bicho?</text></g>
+    <g class="qi-bub b2"><rect x="62" y="40" width="110" height="40" rx="18" fill="#fff" stroke="#e0218a" stroke-width="3"/><path d="M120 79 L132 94 L134 79" fill="#fff" stroke="#e0218a" stroke-width="3"/><text x="117" y="66" text-anchor="middle" font-size="19" font-weight="700" fill="#e0218a" font-family="Fredoka,system-ui,sans-serif">NÃO!</text></g>
+    <g class="qi-bub b3"><rect x="400" y="36" width="170" height="40" rx="18" fill="#fff" stroke="#e0a800" stroke-width="3"/><path d="M455 75 L462 90 L470 75" fill="#fff" stroke="#e0a800" stroke-width="3"/><text x="485" y="62" text-anchor="middle" font-size="16" fill="#1b2a4a" font-family="Fredoka,system-ui,sans-serif">Mas você voa! 🤫</text></g>
+    <g class="qi-bub b4"><rect x="62" y="40" width="120" height="40" rx="18" fill="#fff" stroke="#e0218a" stroke-width="3"/><path d="M120 79 L132 94 L134 79" fill="#fff" stroke="#e0218a" stroke-width="3"/><text x="122" y="66" text-anchor="middle" font-size="18" font-weight="700" fill="#e0218a" font-family="Fredoka,system-ui,sans-serif">Shhh! 😠</text></g>
+  </svg></div>
+  <h2 class="qi-title">Quem Sou Eu?</h2>
+  <p class="qi-sub">Uma pergunta de sim ou não por vez. Toque para começar!</p>`;
+  document.body.appendChild(o);
+  const close=()=>{o.classList.add("out");setTimeout(()=>o.remove(),450);};
+  o.addEventListener("click",close); setTimeout(close,reduce?3500:8000);
+}
+const qiCss=document.createElement("style");
+qiCss.textContent=`
+.qi{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;padding:1rem;cursor:pointer;
+  background:linear-gradient(160deg,#e3efff,#ffffff 50%,#fff6d6 80%,#ffe3f4);animation:qiIn .4s ease both;font-family:"Fredoka",system-ui,sans-serif}
+.qi.out{animation:qiOut .45s ease both}
+.qi-paper{width:min(640px,96vw);border-radius:14px;overflow:hidden;box-shadow:0 14px 40px rgba(30,60,140,.3),0 0 0 6px #fff,0 0 0 9px #ffd23f;transform:rotate(-1deg)}
+.qi-svg{display:block;width:100%;height:auto}
+.qi-title{margin:.6rem 0 0;font-size:clamp(2.2rem,8vw,3.6rem);font-weight:700;background:linear-gradient(90deg,#1e6fe0,#e0218a);-webkit-background-clip:text;background-clip:text;color:transparent;animation:qiPop .6s 6.2s both,qiWig 1.2s 6.8s ease-in-out infinite}
+.qi-sub{margin:0;color:#1b2a4a;font-size:1.05rem;animation:qiPop .5s 6.6s both}
+.qi-fig{animation:qiBob 1.1s ease-in-out infinite}
+.qi-b{animation-delay:.2s}.qi-c{animation-delay:.4s}
+.qi-arm-a{animation:qiPoint .5s ease-in-out infinite alternate}
+.qi-arm-c{animation:qiPoint .45s .2s ease-in-out infinite alternate}
+.qi-arms-b{animation:qiShrug .7s ease-in-out infinite alternate}
+.qi-q text{animation:qiFloat 1.8s ease-in-out infinite}
+.qi-q.q2 text{animation-delay:.5s}.qi-q.q3 text{animation-delay:1s}
+.qi-bub{opacity:0;transform-box:fill-box;transform-origin:50% 100%}
+.qi-bub.b1{animation:qiBub 1.6s .5s both}
+.qi-bub.b2{animation:qiBub 1.4s 2.1s both}
+.qi-bub.b3{animation:qiBub 1.6s 3.4s both}
+.qi-bub.b4{animation:qiBub 1.6s 5s both}
+@keyframes qiIn{from{opacity:0}to{opacity:1}}
+@keyframes qiOut{to{opacity:0}}
+@keyframes qiBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes qiPoint{from{transform:rotate(-8deg)}to{transform:rotate(12deg)}}
+@keyframes qiShrug{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+@keyframes qiFloat{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-10px);opacity:1}}
+@keyframes qiBub{0%{opacity:0;transform:scale(.3)}15%{opacity:1;transform:scale(1.08)}22%,85%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.9)}}
+@keyframes qiPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes qiWig{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+.qi.calm *{animation:none!important}.qi.calm .qi-bub{opacity:1}.qi.calm .qi-bub.b4{opacity:0}`;
+document.head.appendChild(qiCss);
+function paintPage(){document.body.classList.toggle("qse-on",location.hash==="#quemsoueu");}
+window.addEventListener("hashchange",paintPage); paintPage();
 init();
 })();
