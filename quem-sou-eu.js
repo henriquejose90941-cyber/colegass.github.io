@@ -12,7 +12,8 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
 const fmt=ms=>{const t=Math.max(0,Math.ceil(ms/1000));return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");};
 const CATS=[...new Set(TEMAS.map(t=>t[0]))];
-const COLORS=["#e0192a","#9d3cff","#2fb8a6","#f5b942","#3f8cff","#ff6fb5","#7fc49d","#ff8a3d"];
+const COLORS=["#1e6fe0","#ff6b6b","#22b07d","#f5a623","#8e5cf7","#ff5fa2","#00a8c6","#ff8a3d"];
+const POSTIT=["#fff3a3","#ffd6e0","#c9f2dc","#d6e8ff","#ffe1c2","#e6dcff","#c8f1f7","#fff0c7"];
 
 const S={state:"loading",db:null,me:null,name:ls.get("sm-nome")||"",code:null,game:null,players:{},assign:{},questions:{},answers:{},done:{},
   subs:[],loaded:{},busy:false,msg:"",theme:"",item:"rand",lastToast:"",advancedFor:null,phaseFor:null};
@@ -30,6 +31,7 @@ const turnNo=()=>(G()&&G().turnNo)||0;
 const curQ=()=>S.questions["m"+M()+"_t"+turnNo()];
 const curAnswers=()=>Object.values(S.answers).filter(a=>a.match===M()&&a.turnNo===turnNo());
 const over=()=>G()&&G().phase==="jogo"&&order().length>=2&&doneList().length>=order().length-1;
+const timed=()=>!G()||G().timed!==false;
 const timeLeft=()=>G()&&G().turnStart?G().turnStart+(G().dur||60)*1000-Date.now():0;
 const sortedPlayers=()=>Object.entries(S.players).sort((a,b)=>(a[1].joined||0)-(b[1].joined||0));
 const targetOf=id=>G()&&G().pairs?G().pairs[id]:null;
@@ -108,6 +110,7 @@ const A={
   forget:()=>leaveLocal(),
   kick:id=>run(()=>S.db.doc("qse/"+S.code+"/players/"+id).delete()),
   claim:()=>run(()=>S.db.doc("qse/"+S.code).update({host:S.me})),
+  timed:v=>run(()=>S.db.doc("qse/"+S.code).update({timed:v})),
   dur:d=>{const v=Math.min(DUR_MAX,Math.max(DUR_MIN,((G()&&G().dur)||60)+d));run(()=>S.db.doc("qse/"+S.code).update({dur:v}));},
   start:()=>run(async()=>{
     const ids=sortedPlayers().map(([id])=>id);
@@ -172,7 +175,7 @@ function seatHTML(id,i,n,myIdx){
   let card;
   if(!a) card=`<div class="postit empty">…</div>`;
   else if(me&&!done) card=`<div class="postit me"><b>?</b><small>${a.mixed?"Tema misturado":esc(a.theme)}</small></div>`;
-  else card=`<div class="postit${done?" ok":""}"><b>${esc(a.item)}</b><small>${esc(a.theme)}</small>${done?"<i>✔ descobriu</i>":""}</div>`;
+  else card=`<div class="postit${done?" ok":""}" style="--pc:${POSTIT[order().indexOf(id)%POSTIT.length]}"><b>${esc(a.item)}</b><small>${esc(a.theme)}</small>${done?"<i>✔ descobriu</i>":""}</div>`;
   return `<div class="seat${active?" active":""}${me?" mine":""}" style="left:${x}%;top:${y}%">
     ${card}${boneco(COLORS[order().indexOf(id)%COLORS.length],active)}
     <span class="seat-name">${active?"🎤 ":""}${esc(nameOf(id))}${me?" (você)":""}</span></div>`;
@@ -200,7 +203,8 @@ function vLobby(){
   <div class="mp-code">${esc(S.code)}</div>
   <h3 class="mp-h">Na mesa (${n}/${MAX})</h3>
   <ul class="mp-players">${ps.map(([id,p])=>`<li><span>${esc(p.name)}${id===S.me?" <em>(você)</em>":""}${G()&&G().host===id?" 👑":""}</span>${isHost()&&id!==S.me?btn("kick","Remover","",false,`data-id="${esc(id)}"`):""}</li>`).join("")}</ul>
-  <div class="mp-row"><span>⏱️ Tempo por vez: <b>${fmt(d*1000)}</b></span>${isHost()?btn("dur","−30s","",d<=DUR_MIN,'data-d="-30"')+btn("dur","+30s","",d>=DUR_MAX,'data-d="30"'):""}</div>
+  <div class="mp-row"><span>Modo:</span>${isHost()?`<span class="seg">${btn("timed","⏱️ Com tempo",timed()?"on":"",false,'data-v="1"')}${btn("timed","♾️ Sem tempo",timed()?"":"on",false,'data-v="0"')}</span>`:`<b>${timed()?"⏱️ Com tempo":"♾️ Sem tempo"}</b>`}</div>
+  ${timed()?`<div class="mp-row"><span>Tempo por vez: <b>${fmt(d*1000)}</b></span>${isHost()?btn("dur","−30s","",d<=DUR_MIN,'data-d="-30"')+btn("dur","+30s","",d>=DUR_MAX,'data-d="30"'):""}</div>`:`<p class="mp-note">Sem limite: cada um passa a vez quando terminar.</p>`}
   ${n<MIN?`<p class="mp-note">Falta ${MIN-n} jogador para começar.</p>`:""}
   <div class="mp-row">
     ${isHost()?btn("start","Começar","primary",n<MIN||n>MAX):`<span class="mp-note">${hostHere?"Aguardando o anfitrião começar…":"O anfitrião saiu."}</span>`}
@@ -234,11 +238,17 @@ function vGame(){
   const tl=timeLeft();
   const center=fim?`<div class="qse-center"><h3>Fim de jogo!</h3></div>`:`<div class="qse-center">
     <div class="qse-turn">Vez de <b>${esc(nameOf(c))}</b></div>
-    <div class="qse-timer${tl<=10000?" low":""}" id="qseTimer">${fmt(tl)}</div>
+    ${timed()?`<div class="qse-timer${tl<=10000?" low":""}" id="qseTimer">${fmt(tl)}</div>`:`<div class="qse-timer free">♾️</div>`}
     ${q&&q.q?`<div class="qse-bubble">“${esc(q.q)}”</div>`:`<div class="qse-bubble dim">Aguardando a pergunta…</div>`}
     ${q&&q.q?`<div class="qse-votes">Sim ${ans.filter(a=>a.v==="sim").length} · Não ${ans.filter(a=>a.v==="nao").length} · Não sei ${ans.filter(a=>a.v==="talvez").length}</div>`:""}
     ${q&&q.guess?`<div class="qse-guess ${q.ok?"ok":"bad"}">${esc(nameOf(q.by))} chutou “${esc(q.guess)}” — ${q.ok?"acertou! 🎉":"errou!"}</div>`:""}
   </div>`;
+  const medal=i=>["🥇","🥈","🥉"][i]||((i+1)+"º");
+  const n2=Math.max(1,o.length), dl=doneList();
+  const rank=`<aside class="panel qse-rank-live"><h3>🏆 Ranking</h3>
+    ${dl.length?`<ol class="rank-list">${dl.map((d,i)=>`<li class="r${i}"><span class="medal">${medal(i)}</span><span class="rn"><b>${esc(nameOf(d.by))}</b><small>era ${esc((assignFor(d.by)||{}).item)} · ${Math.ceil((d.turnNo||1)/n2)}ª volta</small></span></li>`).join("")}</ol>`:`<p class="mp-note">Ninguém descobriu ainda. Quem acertar primeiro fica com o ouro!</p>`}
+    ${o.filter(id=>!isDone(id)).length?`<p class="mp-note">${fim?"Não descobriu":"Ainda tentando"}:</p><div class="rank-wait">${o.filter(id=>!isDone(id)).map(id=>`<span>${id===c&&!fim?"🎤 ":""}${esc(nameOf(id))}</span>`).join("")}</div>`:""}
+  </aside>`;
   let panel="";
   if(fim){
     const dl=doneList(), last=o.find(id=>!isDone(id));
@@ -261,8 +271,8 @@ function vGame(){
         :`<p class="mp-note">Aguardando a pergunta de ${esc(nameOf(c))}…</p>`}
       ${msg()}</div>`;
   }
-  return `<div class="mp-top"><span class="role">Quem Sou Eu</span><span class="mp-row" style="margin:0"><span class="pill">Sala <b>${esc(S.code)}</b></span><span class="pill">⏱️ ${fmt(((G().dur)||60)*1000)} por vez</span>${btn("leave","Sair da sala")}</span></div>
-    <div class="qse-table-wrap"><div class="qse-table"></div>${center}${seats}</div>${panel}`;
+  return `<div class="mp-top"><span class="role">Quem Sou Eu</span><span class="mp-row" style="margin:0"><span class="pill">Sala <b>${esc(S.code)}</b></span><span class="pill">${timed()?"⏱️ "+fmt(((G().dur)||60)*1000)+" por vez":"♾️ Sem tempo"}</span>${btn("leave","Sair da sala")}</span></div>
+    <div class="qse-layout"><div class="qse-table-wrap"><div class="qse-table"></div>${center}${seats}</div>${rank}</div>${panel}`;
 }
 function view(){
   if(S.state==="loading") return `<div class="mp-card"><p>Arrumando a mesa…</p></div>`;
@@ -296,6 +306,7 @@ root.addEventListener("click",e=>{
   const a=t.dataset.act;
   if(a==="kick") return A.kick(t.dataset.id);
   if(a==="dur") return A.dur(+t.dataset.d);
+  if(a==="timed") return A.timed(t.dataset.v==="1");
   if(a==="answer") return A.answer(t.dataset.v);
   if(A[a]) A[a]();
 });
@@ -310,7 +321,7 @@ root.addEventListener("keydown",e=>{
 });
 /* relógio da vez: troca automática quando o tempo acaba */
 setInterval(()=>{
-  if(!S.code||!G()||G().phase!=="jogo"||over()) return;
+  if(!S.code||!G()||G().phase!=="jogo"||over()||!timed()) return;
   const tl=timeLeft(), el=document.getElementById("qseTimer");
   if(el){el.textContent=fmt(tl);el.classList.toggle("low",tl<=10000);}
   if(tl<-1000&&(isHost()||cur()===S.me)&&S.advancedFor!==turnNo()&&!S.busy){ advance(null).catch(()=>{S.advancedFor=null;}); }
@@ -349,5 +360,53 @@ st.textContent=`
 .turn-me{border-color:#f5b942;box-shadow:0 0 18px rgba(245,185,66,.3)}
 .qse-rank{padding-left:1.4rem}.qse-rank li{margin:.3rem 0}.qse-rank .lost{color:var(--means)}`;
 document.head.appendChild(st);
+const fl=document.createElement("link");fl.rel="stylesheet";fl.href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap";document.head.appendChild(fl);
+const th=document.createElement("style");
+th.textContent=`
+#tab-quemsoueu{--bg:#eef5ff;--surface:#ffffff;--surface2:#e6f0ff;--text:#0d2747;--muted:#52708f;--line:#bcd5f5;--flame:#1e6fe0;--flame-glow:rgba(30,111,224,.25);--clue:#1e6fe0;--purple:#3a8dff;--purple-glow:rgba(58,141,255,.25);--means:#e04848;--ok:#1f9d63;color-scheme:light;
+  color:var(--text);background:linear-gradient(160deg,#ffffff 0%,#e3efff 55%,#cfe3ff 100%);border-radius:18px;padding:1.2rem;margin-top:1rem;box-shadow:0 10px 40px rgba(0,40,120,.25);font-family:"Fredoka",system-ui,sans-serif}
+#tab-quemsoueu h1,#tab-quemsoueu h2,#tab-quemsoueu h3,#tab-quemsoueu .role{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;letter-spacing:0;text-shadow:none;color:#1e6fe0}
+#tab-quemsoueu .mp-card,#tab-quemsoueu .panel{background:#fff;border:1px solid var(--line);box-shadow:0 6px 20px rgba(30,111,224,.12)}
+#tab-quemsoueu .mp-code{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;color:#1e6fe0;text-shadow:none;letter-spacing:.25em}
+#tab-quemsoueu button{background:#fff;color:#1e6fe0;border:2px solid #bcd5f5;border-radius:10px;font-weight:600}
+#tab-quemsoueu button:hover:not(:disabled){border-color:#1e6fe0}
+#tab-quemsoueu button.primary{background:linear-gradient(180deg,#3a8dff,#1e6fe0);color:#fff;border-color:#1e6fe0;box-shadow:0 4px 12px rgba(30,111,224,.35)}
+#tab-quemsoueu button.danger{background:linear-gradient(180deg,#ff7a7a,#e04848);color:#fff;border-color:#e04848;box-shadow:0 4px 12px rgba(224,72,72,.3)}
+#tab-quemsoueu .seg{display:inline-flex;gap:.3rem}
+#tab-quemsoueu .seg button.on{background:#1e6fe0;color:#fff;border-color:#1e6fe0}
+#tab-quemsoueu .pill{background:#e6f0ff;border-color:#bcd5f5;color:#0d2747}
+#tab-quemsoueu .mp-players li{background:#eef5ff}
+#tab-quemsoueu input[type=text],#tab-quemsoueu .qse-sel{background:#f6faff;color:#0d2747;border:2px solid #bcd5f5}
+#tab-quemsoueu .mp-rules summary{color:#1e6fe0}
+.qse-layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:1rem;align-items:start}
+@media (max-width:900px){.qse-layout{grid-template-columns:1fr}}
+#tab-quemsoueu .qse-table{background:radial-gradient(ellipse at 50% 35%,#4da3ff,#1e6fe0 55%,#164fa8);border:7px solid #ffffff;box-shadow:0 18px 40px rgba(20,70,160,.35),inset 0 0 30px rgba(0,0,0,.18)}
+#tab-quemsoueu .qse-turn,#tab-quemsoueu .qse-votes{color:#fff}
+#tab-quemsoueu .qse-timer{color:#fff;font-family:"Fredoka",system-ui,sans-serif;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.25)}
+#tab-quemsoueu .qse-timer.low{color:#ffe14d}
+#tab-quemsoueu .qse-timer.free{font-size:2rem}
+#tab-quemsoueu .qse-bubble{background:#fff;color:#0d2747;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+#tab-quemsoueu .qse-bubble.dim{background:rgba(255,255,255,.25);color:#fff}
+#tab-quemsoueu .qse-guess.ok{background:#d9f7e8;color:#147a4a}#tab-quemsoueu .qse-guess.bad{background:#ffe1e1;color:#b62b2b}
+#tab-quemsoueu .seat-name{background:#fff;color:#1e6fe0;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+#tab-quemsoueu .seat.mine .seat-name{background:#1e6fe0;color:#fff}
+#tab-quemsoueu .seat.active .qse-boneco{filter:drop-shadow(0 0 12px #ffd23f)}
+#tab-quemsoueu .postit{background:var(--pc,#fff3a3)}
+#tab-quemsoueu .postit.me{background:#1e6fe0;color:#fff;border:2px dashed #fff}
+#tab-quemsoueu .postit.ok{background:#c9f2dc}
+#tab-quemsoueu .turn-me{border:2px solid #1e6fe0;box-shadow:0 0 0 4px rgba(30,111,224,.15)}
+.qse-rank-live h3{margin-bottom:.4rem}
+.rank-list{list-style:none;margin:0;padding:0;display:grid;gap:.4rem}
+.rank-list li{display:flex;gap:.5rem;align-items:center;background:#f2f7ff;border-radius:10px;padding:.4rem .55rem;animation:mIn .5s ease both}
+.rank-list li.r0{background:linear-gradient(90deg,#fff4c2,#fff);border:1px solid #f5c542}
+.rank-list li.r1{background:linear-gradient(90deg,#eef1f6,#fff);border:1px solid #c5ccd8}
+.rank-list li.r2{background:linear-gradient(90deg,#ffe6d1,#fff);border:1px solid #e3a77a}
+.rank-list .medal{font-size:1.4rem;min-width:1.8rem;text-align:center;font-weight:700;color:#1e6fe0}
+.rank-list .rn{display:flex;flex-direction:column;line-height:1.2}
+.rank-list small{color:#52708f}
+.rank-wait{display:flex;flex-wrap:wrap;gap:.3rem}
+.rank-wait span{background:#e6f0ff;color:#0d2747;border-radius:999px;padding:.15rem .6rem;font-size:.9rem}
+@keyframes mIn{from{opacity:0}to{opacity:1}}`;
+document.head.appendChild(th);
 init();
 })();
