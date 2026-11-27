@@ -415,15 +415,15 @@ const pg=document.createElement("style");
 pg.textContent=`
 body.qse-on{--bg:#f3f8ff;--surface:#ffffff;--surface2:#e6f0ff;--text:#0d2747;--muted:#52708f;--line:#bcd5f5;--flame:#e0218a;--flame-glow:rgba(224,33,138,.3);color-scheme:light;
   background-color:#f3f8ff;
-  background-image:
-    radial-gradient(circle at 8% 12%,rgba(255,210,63,.55) 0 90px,transparent 91px),
-    radial-gradient(circle at 92% 18%,rgba(224,33,138,.28) 0 120px,transparent 121px),
-    radial-gradient(circle at 85% 88%,rgba(255,210,63,.45) 0 80px,transparent 81px),
-    radial-gradient(circle at 12% 85%,rgba(30,111,224,.22) 0 130px,transparent 131px),
-    radial-gradient(circle,rgba(224,33,138,.18) 2px,transparent 3px),
-    linear-gradient(160deg,#e3efff 0%,#ffffff 45%,#fff6d6 75%,#ffe3f4 100%);
-  background-size:auto,auto,auto,auto,34px 34px,auto;background-attachment:fixed}
+  background-image:linear-gradient(160deg,#e3efff 0%,#ffffff 45%,#fff6d6 75%,#ffe3f4 100%);
+  background-attachment:fixed}
 body.qse-on #fx{display:none}
+.qse-doodle{display:none}
+body.qse-on .qse-doodle{display:block;position:fixed;left:0;right:0;bottom:0;z-index:0;pointer-events:none;text-align:center;opacity:.55}
+.qse-doodle svg{width:min(520px,90vw);height:auto}
+.dd-f{animation:qiBob 1.3s ease-in-out infinite}.dd-b{animation-delay:.3s}.dd-c{animation-delay:.6s}
+.dd-arm{animation:qiPoint .6s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.dd-f,.dd-arm{animation:none}}
 body.qse-on::before{background:#f3f8ff}
 body.qse-on .tabs a{font-family:"Fredoka",system-ui,sans-serif;font-weight:700;font-size:1.15rem;letter-spacing:0;color:#1e6fe0;background:#fff;border:2px solid #bcd5f5;box-shadow:0 3px 10px rgba(30,111,224,.12)}
 body.qse-on .tabs a:hover{border-color:#e0218a;color:#e0218a}
@@ -488,10 +488,11 @@ function playIntro(){
     <g class="qi-q q1"><text x="330" y="70" font-size="26" fill="#e0218a" font-family="Fredoka,system-ui,sans-serif" font-weight="700">?</text></g>
     <g class="qi-q q2"><text x="262" y="64" font-size="20" fill="#1e6fe0" font-family="Fredoka,system-ui,sans-serif" font-weight="700">?</text></g>
     <g class="qi-q q3"><text x="312" y="52" font-size="16" fill="#e0a800" font-family="Fredoka,system-ui,sans-serif" font-weight="700">?</text></g>
-    <g class="qi-bub b1"><rect x="212" y="8" width="176" height="40" rx="18" fill="#fff" stroke="#1e6fe0" stroke-width="3"/><path d="M290 47 L300 62 L306 47" fill="#fff" stroke="#1e6fe0" stroke-width="3"/><text x="300" y="34" text-anchor="middle" font-size="17" fill="#1b2a4a" font-family="Fredoka,system-ui,sans-serif">Eu sou um bicho?</text></g>
-    <g class="qi-bub b2"><rect x="62" y="40" width="110" height="40" rx="18" fill="#fff" stroke="#e0218a" stroke-width="3"/><path d="M120 79 L132 94 L134 79" fill="#fff" stroke="#e0218a" stroke-width="3"/><text x="117" y="66" text-anchor="middle" font-size="19" font-weight="700" fill="#e0218a" font-family="Fredoka,system-ui,sans-serif">NÃO!</text></g>
-    <g class="qi-bub b3"><rect x="400" y="36" width="170" height="40" rx="18" fill="#fff" stroke="#e0a800" stroke-width="3"/><path d="M455 75 L462 90 L470 75" fill="#fff" stroke="#e0a800" stroke-width="3"/><text x="485" y="62" text-anchor="middle" font-size="16" fill="#1b2a4a" font-family="Fredoka,system-ui,sans-serif">Mas você voa! 🤫</text></g>
-    <g class="qi-bub b4"><rect x="62" y="40" width="120" height="40" rx="18" fill="#fff" stroke="#e0218a" stroke-width="3"/><path d="M120 79 L132 94 L134 79" fill="#fff" stroke="#e0218a" stroke-width="3"/><text x="122" y="66" text-anchor="middle" font-size="18" font-weight="700" fill="#e0218a" font-family="Fredoka,system-ui,sans-serif">Shhh! 😠</text></g>
+    <g class="qi-bub b1"><rect x="206" y="8" width="188" height="40" rx="18" fill="#fff" stroke="#1e6fe0" stroke-width="3"/><path d="M290 47 L300 62 L306 47" fill="#fff" stroke="#1e6fe0" stroke-width="3"/><text x="300" y="34" text-anchor="middle" font-size="17" fill="#1b2a4a" font-family="Fredoka,system-ui,sans-serif">Eu sou o quê?? 🤔</text></g>
+    <g class="qi-bub b2"><rect x="50" y="40" width="150" height="40" rx="18" fill="#fff" stroke="#e0218a" stroke-width="3"/><path d="M120 79 L132 94 L134 79" fill="#fff" stroke="#e0218a" stroke-width="3"/><text x="125" y="66" text-anchor="middle" font-size="17" font-weight="700" fill="#e0218a" font-family="Fredoka,system-ui,sans-serif">Tem na água! 🌊</text></g>
+    <g class="qi-bub b3"><rect x="392" y="40" width="186" height="40" rx="18" fill="#fff" stroke="#e0a800" stroke-width="3"/><path d="M455 79 L462 94 L470 79" fill="#fff" stroke="#e0a800" stroke-width="3"/><text x="485" y="66" text-anchor="middle" font-size="17" fill="#1b2a4a" font-family="Fredoka,system-ui,sans-serif">É enorme e esguicha!</text></g>
+    <g class="qi-bub b4"><rect x="216" y="8" width="168" height="40" rx="18" fill="#fff" stroke="#1e6fe0" stroke-width="3"/><path d="M290 47 L300 62 L306 47" fill="#fff" stroke="#1e6fe0" stroke-width="3"/><text x="300" y="34" text-anchor="middle" font-size="17" fill="#1b2a4a" font-family="Fredoka,system-ui,sans-serif">Um barco?! 🚤</text></g>
+    <g class="qi-bub b5"><rect x="50" y="40" width="150" height="40" rx="18" fill="#fff" stroke="#e0218a" stroke-width="3"/><path d="M120 79 L132 94 L134 79" fill="#fff" stroke="#e0218a" stroke-width="3"/><text x="125" y="66" text-anchor="middle" font-size="17" font-weight="700" fill="#e0218a" font-family="Fredoka,system-ui,sans-serif">Nããão! 🤦</text></g>
   </svg></div>
   <h2 class="qi-title">Quem Sou Eu?</h2>
   <p class="qi-sub">Uma pergunta de sim ou não por vez. Toque para começar!</p>`;
@@ -516,10 +517,11 @@ qiCss.textContent=`
 .qi-q text{animation:qiFloat 1.8s ease-in-out infinite}
 .qi-q.q2 text{animation-delay:.5s}.qi-q.q3 text{animation-delay:1s}
 .qi-bub{opacity:0;transform-box:fill-box;transform-origin:50% 100%}
-.qi-bub.b1{animation:qiBub 1.6s .5s both}
-.qi-bub.b2{animation:qiBub 1.4s 2.1s both}
-.qi-bub.b3{animation:qiBub 1.6s 3.4s both}
-.qi-bub.b4{animation:qiBub 1.6s 5s both}
+.qi-bub.b1{animation:qiBub 1.5s .4s both}
+.qi-bub.b2{animation:qiBub 1.4s 1.7s both}
+.qi-bub.b3{animation:qiBub 1.4s 2.9s both}
+.qi-bub.b4{animation:qiBub 1.3s 4.2s both}
+.qi-bub.b5{animation:qiBub 1.3s 5.2s both}
 @keyframes qiIn{from{opacity:0}to{opacity:1}}
 @keyframes qiOut{to{opacity:0}}
 @keyframes qiBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -529,8 +531,23 @@ qiCss.textContent=`
 @keyframes qiBub{0%{opacity:0;transform:scale(.3)}15%{opacity:1;transform:scale(1.08)}22%,85%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.9)}}
 @keyframes qiPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
 @keyframes qiWig{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
-.qi.calm *{animation:none!important}.qi.calm .qi-bub{opacity:1}.qi.calm .qi-bub.b4{opacity:0}`;
+.qi.calm *{animation:none!important}.qi.calm .qi-bub.b2,.qi.calm .qi-bub.b3{opacity:1}`;
 document.head.appendChild(qiCss);
+const doodle=document.createElement("div"); doodle.className="qse-doodle"; doodle.setAttribute("aria-hidden","true");
+(function(){
+  const f=(x,extra,cls)=>`<g class="dd-f ${cls}" style="transform-origin:${x}px 200px"><circle cx="${x}" cy="70" r="18" fill="#fff" stroke="#1b2a4a" stroke-width="3.5"/>
+    <circle cx="${x-6}" cy="67" r="2.2" fill="#1b2a4a"/><circle cx="${x+6}" cy="67" r="2.2" fill="#1b2a4a"/>
+    <line x1="${x}" y1="88" x2="${x}" y2="145" stroke="#1b2a4a" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M${x} 145 L${x-18} 190 M${x} 145 L${x+18} 190" stroke="#1b2a4a" stroke-width="3.5" stroke-linecap="round" fill="none"/>${extra}</g>`;
+  const b=(x,y,w,c,t)=>`<g><rect x="${x}" y="${y}" width="${w}" height="30" rx="14" fill="#fff" stroke="${c}" stroke-width="2.5"/><text x="${x+w/2}" y="${y+20}" text-anchor="middle" font-size="13" fill="#1b2a4a" font-family="Fredoka,system-ui,sans-serif">${t}</text></g>`;
+  doodle.innerHTML=`<svg viewBox="0 0 420 210" class="dd-l">
+    ${f(70,`<path d="M62 76 Q70 82 78 76" stroke="#1b2a4a" stroke-width="2.5" fill="none" stroke-linecap="round"/><g class="dd-arm" style="transform-origin:70px 105px"><line x1="70" y1="105" x2="112" y2="92" stroke="#1b2a4a" stroke-width="3.5" stroke-linecap="round"/></g><line x1="70" y1="105" x2="48" y2="130" stroke="#1b2a4a" stroke-width="3.5" stroke-linecap="round"/>`,"")}
+    ${f(200,`<rect x="186" y="36" width="28" height="16" rx="2" fill="#ffd23f" stroke="#c99a00" stroke-width="1.5"/><text x="200" y="49" text-anchor="middle" font-size="13" font-weight="700" fill="#1b2a4a">?</text><ellipse cx="200" cy="79" rx="4" ry="5" fill="#1b2a4a"/><path d="M200 105 L176 86 L172 70 M200 105 L224 86 L228 70" stroke="#1b2a4a" stroke-width="3.5" stroke-linecap="round" fill="none"/>`,"dd-b")}
+    ${f(330,`<path d="M322 76 Q330 82 338 76" stroke="#1b2a4a" stroke-width="2.5" fill="none" stroke-linecap="round"/><g class="dd-arm" style="transform-origin:330px 105px"><line x1="330" y1="105" x2="288" y2="92" stroke="#1b2a4a" stroke-width="3.5" stroke-linecap="round"/></g><line x1="330" y1="105" x2="352" y2="130" stroke="#1b2a4a" stroke-width="3.5" stroke-linecap="round"/>`,"dd-c")}
+    ${b(10,4,120,"#e0218a","Tem na água! 🌊")}${b(146,0,108,"#1e6fe0","Hã?? 🤔")}${b(272,4,140,"#e0a800","É bem grande! 🐋")}
+  </svg>`;
+  document.body.appendChild(doodle);
+})();
 function paintPage(){document.body.classList.toggle("qse-on",location.hash==="#quemsoueu");}
 window.addEventListener("hashchange",paintPage); paintPage();
 init();
